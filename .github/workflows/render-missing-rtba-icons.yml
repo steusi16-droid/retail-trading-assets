@@ -1,0 +1,32 @@
+name: Render missing RTBA icons
+on:
+  push:
+    paths:
+      - '.github/workflows/render-missing-rtba-icons.yml'
+permissions:
+  contents: write
+jobs:
+  render-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install renderer
+        run: python -m pip install cairosvg
+      - name: Render SVG icons to PNG
+        run: |
+          python - <<'PY'
+          import cairosvg
+          from pathlib import Path
+          names = ["N07_bar-chart","N08_line-chart","N10_trending-up","N11_pie"]
+          for name in names:
+              src = Path("assets/icons") / f"{name}.svg"
+              dst = Path("assets/icons") / f"{name}.png"
+              cairosvg.svg2png(url=str(src), write_to=str(dst), output_width=512, output_height=512)
+          PY
+      - name: Commit rendered PNGs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/icons/N07_bar-chart.png assets/icons/N08_line-chart.png assets/icons/N10_trending-up.png assets/icons/N11_pie.png
+          git diff --cached --quiet || git commit -m "Render RTBA icons N07 N08 N10 N11"
+          git push
